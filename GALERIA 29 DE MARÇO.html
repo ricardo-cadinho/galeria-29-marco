@@ -1,0 +1,964 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
+  --yellow:#f5c518;--yellow2:#ffd700;--red:#e53935;--green:#00c853;
+  --text:#f0f0f0;--muted:#888;--border:#2a2a2a;
+  --font:'Oswald',sans-serif;--body:'Roboto Condensed',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh}
+h1,h2,h3,h4{font-family:var(--font);letter-spacing:1px}
+.app{max-width:1100px;margin:0 auto;padding:12px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 0 16px;border-bottom:2px solid var(--yellow);margin-bottom:20px}
+.header h1{font-size:22px;color:var(--yellow);letter-spacing:3px;text-transform:uppercase}
+.header span{font-size:11px;color:var(--muted);letter-spacing:1px}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.nav button{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:8px 14px;font-family:var(--font);font-size:13px;letter-spacing:1px;cursor:pointer;transition:.2s}
+.nav button.active{background:var(--yellow);color:#000;border-color:var(--yellow)}
+.nav button:hover:not(.active){border-color:var(--yellow);color:var(--yellow)}
+.page{display:none}.page.active{display:block}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.card{background:var(--bg3);border:1px solid var(--border);padding:14px;border-top:3px solid var(--yellow)}
+.card.red{border-top-color:var(--red)}
+.card.green{border-top-color:var(--green)}
+.card.muted{border-top-color:var(--muted)}
+.card label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.card .val{font-family:var(--font);font-size:22px;color:var(--yellow)}
+.card.red .val{color:var(--red)}
+.card.green .val{color:var(--green)}
+.card.muted .val{color:var(--text)}
+
+/* LOJAS GRID */
+.lojas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:20px}
+.loja-btn{background:var(--bg3);border:2px solid var(--border);padding:10px 6px;cursor:pointer;transition:.2s;text-align:center}
+.loja-btn:hover{border-color:var(--yellow);transform:translateY(-2px)}
+.loja-btn.ocupada{border-color:#2a4a1a}
+.loja-btn.ocupada:hover{border-color:var(--green)}
+.loja-btn.vaga{border-color:#3a1a1a}
+.loja-btn.vaga:hover{border-color:var(--red)}
+.loja-btn.atrasada{border-color:var(--red);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(229,57,53,.3)}50%{box-shadow:0 0 0 6px rgba(229,57,53,0)}}
+.loja-btn .num{font-family:var(--font);font-size:16px;color:var(--yellow)}
+.loja-btn .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-top:4px}
+.loja-btn .tenant{font-size:9px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;padding:20px;overflow-y:auto}
+.modal-overlay.show{display:flex;align-items:flex-start;justify-content:center;padding-top:40px}
+.modal{background:var(--bg2);border:1px solid var(--yellow);max-width:500px;width:100%;padding:20px}
+.modal h3{color:var(--yellow);font-family:var(--font);font-size:20px;letter-spacing:2px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.modal-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.modal-row label{color:var(--muted)}
+.modal-row span{color:var(--text);text-align:right}
+.status-badge{display:inline-block;padding:3px 10px;font-size:11px;font-family:var(--font);letter-spacing:1px}
+.badge-ok{background:rgba(0,200,83,.15);color:var(--green);border:1px solid var(--green)}
+.badge-late{background:rgba(229,57,53,.15);color:var(--red);border:1px solid var(--red)}
+.badge-vaga{background:rgba(136,136,136,.15);color:var(--muted);border:1px solid var(--muted)}
+.hist-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:10px}
+.hist-table th{background:var(--bg4);color:var(--yellow);font-family:var(--font);font-size:11px;letter-spacing:1px;padding:8px 6px;text-align:left}
+.hist-table td{padding:7px 6px;border-bottom:1px solid var(--border);color:var(--text)}
+.hist-table tr:hover td{background:var(--bg3)}
+.close-btn{background:transparent;border:1px solid var(--muted);color:var(--muted);padding:8px 20px;font-family:var(--font);letter-spacing:1px;cursor:pointer;margin-top:14px;float:right}
+.close-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* FORMS */
+.form-section{background:var(--bg3);border:1px solid var(--border);padding:16px;margin-bottom:16px}
+.form-section h3{color:var(--yellow);font-family:var(--font);font-size:15px;letter-spacing:2px;margin-bottom:14px;text-transform:uppercase}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.form-group input,.form-group select{background:var(--bg4);border:1px solid var(--border);color:var(--text);padding:8px 10px;font-family:var(--body);font-size:13px;outline:none;width:100%}
+.form-group input:focus,.form-group select:focus{border-color:var(--yellow)}
+.form-group select option{background:var(--bg4)}
+.btn-primary{background:var(--yellow);color:#000;border:none;padding:10px 24px;font-family:var(--font);font-size:14px;letter-spacing:2px;cursor:pointer;transition:.2s}
+.btn-primary:hover{background:var(--yellow2)}
+.btn-secondary{background:transparent;border:1px solid var(--green);color:var(--green);padding:9px 20px;font-family:var(--font);font-size:13px;letter-spacing:1px;cursor:pointer}
+.btn-secondary:hover{background:rgba(0,200,83,.1)}
+.btn-danger{background:transparent;border:1px solid var(--red);color:var(--red);padding:9px 20px;font-family:var(--font);font-size:13px;letter-spacing:1px;cursor:pointer}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto}
+table.main{width:100%;border-collapse:collapse;font-size:13px}
+table.main th{background:var(--bg4);color:var(--yellow);font-family:var(--font);font-size:11px;letter-spacing:1.5px;padding:10px 8px;text-align:left;border-bottom:1px solid var(--yellow)}
+table.main td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.main tr:hover td{background:var(--bg3)}
+.tag{display:inline-block;padding:2px 8px;font-size:10px;font-family:var(--font);letter-spacing:1px}
+
+/* ATRASOS */
+.alert-box{background:rgba(229,57,53,.08);border:1px solid var(--red);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.alert-box .loja-id{font-family:var(--font);font-size:18px;color:var(--red)}
+.alert-box .info{font-size:12px;color:var(--muted)}
+.alert-box .dias{font-family:var(--font);color:var(--red);font-size:13px}
+
+/* RELATÓRIO */
+.rel-section{background:var(--bg3);border-left:3px solid var(--yellow);padding:14px 16px;margin-bottom:12px}
+.rel-section h4{font-family:var(--font);font-size:13px;color:var(--yellow);letter-spacing:2px;margin-bottom:10px}
+.rel-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.rel-row:last-child{border:none}
+.rel-row .amt{font-family:var(--font)}
+.rel-row .amt.income{color:var(--green)}
+.rel-row .amt.expense{color:var(--red)}
+.rel-row .amt.profit{color:var(--yellow);font-size:18px}
+.month-sel{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.month-sel select{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 12px;font-family:var(--body);font-size:13px;outline:none}
+.month-sel select:focus{border-color:var(--yellow)}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
+<h2 class="sr-only">Sistema de Gestão Galeria 29 de Março</h2>
+
+<div class="app">
+<div class="header">
+  <div>
+    <h1>🏬 Galeria 29 de Março</h1>
+    <span id="data-hoje"></span>
+  </div>
+  <div style="text-align:right;font-size:11px;color:var(--muted);letter-spacing:1px">SISTEMA DE GESTÃO</div>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="navTo('dashboard',this)">📊 Dashboard</button>
+  <button onclick="navTo('lojas',this)">🏪 Lojas</button>
+  <button onclick="navTo('pagamentos',this)">💰 Pagamentos</button>
+  <button onclick="navTo('despesas',this)">📋 Despesas</button>
+  <button onclick="navTo('debitos',this)">⚠ Débitos Antigos</button>
+  <button onclick="navTo('cadastro',this)">➕ Cadastros</button>
+  <button onclick="navTo('relatorio',this)">📈 Relatórios</button>
+  <button onclick="navTo('historico',this)">🕓 Histórico</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="cards" id="cards-dash"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <h3 style="font-family:var(--font);color:var(--yellow);letter-spacing:2px;font-size:15px">MAPA DAS LOJAS</h3>
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--muted)">
+      <span>🟢 Em dia</span><span>🔴 Atrasada</span><span>⚫ Vaga</span>
+    </div>
+  </div>
+  <div class="lojas-grid" id="mapa-lojas"></div>
+
+  <div id="alertas-debitos" style="margin-top:16px"></div>
+  <div style="margin-top:16px">
+    <h3 style="font-family:var(--font);color:var(--red);letter-spacing:2px;font-size:14px;margin-bottom:10px">⚠ ALUGUÉIS EM ATRASO</h3>
+    <div id="alertas-atraso"></div>
+  </div>
+</div>
+
+<!-- LOJAS -->
+<div id="page-lojas" class="page">
+  <div class="form-section">
+    <h3>Filtro</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-secondary" onclick="filtrarLojas('todas')">Todas</button>
+      <button class="btn-secondary" onclick="filtrarLojas('ocupadas')">Ocupadas</button>
+      <button class="btn-secondary" onclick="filtrarLojas('vagas')">Vagas</button>
+      <button class="btn-secondary" onclick="filtrarLojas('atrasadas')">Em Atraso</button>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+  <table class="main" id="tabela-lojas">
+    <thead><tr>
+      <th>LOJA</th><th>INQUILINO</th><th>ALUGUEL</th><th>VENCIMENTO</th><th>SITUAÇÃO</th><th>AÇÃO</th>
+    </tr></thead>
+    <tbody id="tbody-lojas"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- PAGAMENTOS -->
+<div id="page-pagamentos" class="page">
+  <div class="form-section">
+    <h3>Registrar Pagamento</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Loja</label><select id="pg-loja" onchange="preencherPg()"><option value="">Selecione...</option></select></div>
+      <div class="form-group"><label>Mês de Referência</label><input type="month" id="pg-mes"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Valor Recebido (R$)</label><input type="number" id="pg-valor" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Data do Pagamento</label><input type="date" id="pg-data"></div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label>Observação</label><input type="text" id="pg-obs" placeholder="Opcional"></div>
+    </div>
+    <button class="btn-primary" onclick="registrarPagamento()">✔ REGISTRAR PAGAMENTO</button>
+  </div>
+  <h3 style="font-family:var(--font);color:var(--yellow);letter-spacing:2px;font-size:14px;margin-bottom:10px">PAGAMENTOS RECENTES</h3>
+  <div class="tbl-wrap">
+  <table class="main">
+    <thead><tr><th>DATA</th><th>LOJA</th><th>INQUILINO</th><th>REFERÊNCIA</th><th>VALOR ALUGUEL</th><th>PAGO</th><th>SALDO</th><th>SITUAÇÃO</th><th>OBS / ESTORNO</th><th>AÇÕES</th></tr></thead>
+    <tbody id="tbody-pagamentos"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- DESPESAS -->
+<div id="page-despesas" class="page">
+  <div class="form-section">
+    <h3>Registrar Despesa</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Categoria</label>
+        <select id="desp-cat">
+          <option>Energia Elétrica</option><option>Água</option><option>Manutenção</option>
+          <option>Limpeza</option><option>Impostos</option><option>Reparos</option>
+          <option>Segurança</option><option>Administração</option><option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Mês de Referência</label><input type="month" id="desp-mes"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Valor (R$)</label><input type="number" id="desp-valor" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Data do Pagamento</label><input type="date" id="desp-data"></div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label>Descrição</label><input type="text" id="desp-desc" placeholder="Detalhe a despesa"></div>
+    </div>
+    <button class="btn-primary" onclick="registrarDespesa()">✔ REGISTRAR DESPESA</button>
+  </div>
+  <h3 style="font-family:var(--font);color:var(--yellow);letter-spacing:2px;font-size:14px;margin-bottom:10px">DESPESAS REGISTRADAS</h3>
+  <div class="tbl-wrap">
+  <table class="main">
+    <thead><tr><th>DATA</th><th>CATEGORIA</th><th>DESCRIÇÃO</th><th>MÊS REF.</th><th>VALOR</th><th>SITUAÇÃO</th><th>AÇÃO</th></tr></thead>
+    <tbody id="tbody-despesas"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- CADASTRO -->
+<div id="page-cadastro" class="page">
+  <div class="form-section">
+    <h3>Cadastrar / Editar Loja</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Loja</label>
+        <select id="cad-loja-sel" onchange="carregarCadastro()"><option value="">Nova loja vaga...</option></select>
+      </div>
+      <div class="form-group"><label>Número da Loja</label><input type="text" id="cad-num" placeholder="Ex: Loja 01" readonly style="opacity:.6"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Nome do Inquilino</label><input type="text" id="cad-nome" placeholder="Nome completo"></div>
+      <div class="form-group"><label>Telefone</label><input type="text" id="cad-tel" placeholder="(81) 9xxxx-xxxx"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Valor do Aluguel (R$)</label><input type="number" id="cad-aluguel" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Dia de Vencimento</label><input type="number" id="cad-venc" min="1" max="31" placeholder="Ex: 10"></div>
+    </div>
+    <div class="form-row full">
+      <div class="form-group"><label>E-mail</label><input type="email" id="cad-email" placeholder="email@email.com"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-primary" onclick="salvarCadastro()">💾 SALVAR</button>
+      <button class="btn-danger" onclick="desocuparLoja()">✖ DESOCUPAR LOJA</button>
+    </div>
+  </div>
+</div>
+
+<!-- RELATÓRIOS -->
+<div id="page-relatorio" class="page">
+  <div class="month-sel">
+    <label style="font-size:11px;color:var(--muted);letter-spacing:1px">PERÍODO:</label>
+    <select id="rel-tipo" onchange="gerarRelatorio()">
+      <option value="mensal">Relatório Mensal</option>
+      <option value="anual">Relatório Anual</option>
+    </select>
+    <select id="rel-mes" onchange="gerarRelatorio()"></select>
+    <select id="rel-ano" onchange="gerarRelatorio()"></select>
+  </div>
+  <div id="rel-content"></div>
+</div>
+</div>
+
+<!-- DÉBITOS ANTIGOS -->
+<div id="page-debitos" class="page">
+  <div class="form-section">
+    <h3>Lançar Débito Antigo</h3>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:14px;letter-spacing:.5px">Use esta seção para registrar aluguéis em atraso que existiam ANTES de começar a usar o sistema. Esses valores aparecerão no dashboard como dívida real de cada inquilino.</p>
+    <div class="form-row">
+      <div class="form-group"><label>Loja</label>
+        <select id="deb-loja-sel"><option value="">Selecione a loja...</option></select>
+      </div>
+      <div class="form-group"><label>Competência (mês/ano em atraso)</label>
+        <input type="month" id="deb-comp">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Valor em Atraso (R$)</label>
+        <input type="number" id="deb-valor" step="0.01" placeholder="0,00">
+      </div>
+      <div class="form-group"><label>Observação</label>
+        <input type="text" id="deb-obs" placeholder="Ex: Aluguel de março/2024 em atraso">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="lancarDebitoAntigo()">⚠ LANÇAR DÉBITO</button>
+  </div>
+  <h3 style="font-family:var(--font);color:var(--yellow);letter-spacing:2px;font-size:14px;margin-bottom:10px">DÉBITOS CADASTRADOS</h3>
+  <div class="tbl-wrap">
+  <table class="main">
+    <thead><tr><th>COMPETÊNCIA</th><th>VALOR</th><th>OBSERVAÇÃO</th><th>DATA LANÇAMENTO</th><th colspan="2">AÇÃO</th></tr></thead>
+    <tbody id="tbody-debitos"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="page-historico" class="page">
+  <h3 style="font-family:var(--font);color:var(--yellow);letter-spacing:2px;font-size:15px;margin-bottom:16px">🕓 HISTÓRICO DE MOVIMENTAÇÕES</h3>
+  <div class="tbl-wrap">
+  <table class="main">
+    <thead><tr><th>DATA / HORA</th><th>DESCRIÇÃO</th><th>VALOR</th><th>DETALHE</th></tr></thead>
+    <tbody id="tbody-historico"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- MODAL LOJA -->
+<div class="modal-overlay" id="modal-loja">
+  <div class="modal">
+    <h3 id="modal-title">LOJA 01</h3>
+    <div id="modal-body"></div>
+    <button class="close-btn" onclick="fecharModal()">✖ FECHAR</button>
+    <div style="clear:both"></div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO PARCIAL -->
+<div class="modal-overlay" id="modal-parcial">
+  <div class="modal" style="max-width:540px">
+    <h3>💰 PAGAMENTO PARCIAL</h3>
+    <div style="margin-bottom:12px">
+      <div style="font-family:var(--font);color:var(--yellow);font-size:16px;letter-spacing:1px" id="parcial-loja"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--bg4);padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px">VALOR TOTAL</div>
+        <div style="font-family:var(--font);color:var(--text)" id="parcial-total">R$ 0,00</div>
+      </div>
+      <div style="background:var(--bg4);padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px">JÁ PAGO</div>
+        <div style="font-family:var(--font);color:var(--green)" id="parcial-pago">R$ 0,00</div>
+      </div>
+      <div style="background:var(--bg4);padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px">SALDO PENDENTE</div>
+        <div style="font-family:var(--font);color:var(--red)" id="parcial-saldo">R$ 0,00</div>
+      </div>
+    </div>
+    <div style="background:var(--bg4);height:8px;border-radius:4px;margin-bottom:14px;overflow:hidden">
+      <div id="parcial-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;border-radius:4px"></div>
+    </div>
+    <input type="hidden" id="parcial-id">
+    <div class="form-row">
+      <div class="form-group"><label>Valor Pago Agora (R$)</label><input type="number" id="parcial-valor" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Data do Pagamento</label><input type="date" id="parcial-data"></div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr">
+      <div class="form-group"><label>Observação</label><input type="text" id="parcial-obs" placeholder="Opcional"></div>
+    </div>
+    <h4 style="font-family:var(--font);color:var(--yellow);font-size:12px;letter-spacing:1.5px;margin:12px 0 8px">PARCELAS REGISTRADAS</h4>
+    <div id="parcial-hist"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-primary" onclick="salvarParcial()">✔ REGISTRAR PARCELA</button>
+      <button class="close-btn" style="float:none" onclick="fecharParcial()">✖ FECHAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LOJAS_IDS=['01','02','03','04','05','06','07','08','09','10','10A','11','11A','12','12A','13','13A','14','15','16'];
+
+let state={
+  lojas:{},
+  pagamentos:[],
+  despesas:[],
+  historico:[],
+  debitos:[]
+};
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function initState(){
+  const saved=localStorage.getItem('galeria29v2');
+  if(saved){
+    state=JSON.parse(saved);
+    /* garante campos novos em registros antigos */
+    if(!state.historico)state.historico=[];
+    if(!state.debitos)state.debitos=[];
+    state.pagamentos.forEach(p=>{if(!p.id)p.id=uid();if(p.cancelado===undefined)p.cancelado=false;if(!p.parcelas)p.parcelas=[];if(p.pago===undefined)p.pago=Number(p.valor);});
+    state.despesas.forEach(d=>{if(!d.id)d.id=uid();if(d.cancelado===undefined)d.cancelado=false;});
+    return;
+  }
+  /* Estado inicial limpo — sem dados fictícios */
+  LOJAS_IDS.forEach(id=>{
+    state.lojas[id]={id,nome:'',tel:'',email:'',aluguel:0,venc:10,ocupada:false};
+  });
+  save();
+}
+
+function save(){localStorage.setItem('galeria29v2',JSON.stringify(state));}
+
+function fmt(v){return'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtData(d){if(!d)return'-';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
+function hoje(){return new Date().toISOString().slice(0,10);}
+function mesAtualStr(){const h=new Date();return h.getFullYear()+'-'+(h.getMonth()<9?'0':'')+(h.getMonth()+1);}
+
+function isAtrasada(id){
+  const l=state.lojas[id];
+  if(!l.ocupada||l.aluguel===0)return false;
+  const mes=mesAtualStr();
+  const pago=state.pagamentos.find(p=>p.loja===id&&p.mes===mes&&!p.cancelado&&(p.pago>=p.valor||(!p.pago&&Number(p.valor)>0)));
+  if(pago)return false;
+  const h=new Date();
+  const venc=new Date(h.getFullYear(),h.getMonth(),l.venc);
+  return h>venc;
+}
+
+function diasAtraso(id){
+  const l=state.lojas[id];
+  const h=new Date();
+  const venc=new Date(h.getFullYear(),h.getMonth(),l.venc);
+  return Math.max(0,Math.floor((h-venc)/(1000*60*60*24)));
+}
+
+function navTo(pg,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+pg).classList.add('active');
+  btn.classList.add('active');
+  if(pg==='dashboard')renderDash();
+  if(pg==='lojas')renderLojas();
+  if(pg==='pagamentos')renderPagamentos();
+  if(pg==='despesas')renderDespesas();
+  if(pg==='cadastro')renderCadastro();
+  if(pg==='relatorio')initRelatorio();
+  if(pg==='debitos'){renderDebitos();}
+  if(pg==='historico'){renderHistorico();}
+}
+
+function renderDash(){
+  const lojas=LOJAS_IDS.map(id=>state.lojas[id]);
+  const ocupadas=lojas.filter(l=>l.ocupada);
+  const vagas=lojas.filter(l=>!l.ocupada);
+  const mes=mesAtualStr();
+  const totalReceber=ocupadas.reduce((s,l)=>s+l.aluguel,0);
+  const totalRecebido=state.pagamentos.filter(p=>p.mes===mes&&!p.cancelado).reduce((s,p)=>s+(Number(p.pago)||Number(p.valor)),0);
+  const totalDesp=state.despesas.filter(d=>d.mes===mes&&!d.cancelado).reduce((s,d)=>s+Number(d.valor),0);
+  const lucro=totalRecebido-totalDesp;
+  const atrasadas=LOJAS_IDS.filter(id=>isAtrasada(id));
+  const debitosAtivos=(state.debitos||[]).filter(d=>!d.quitado);
+  const totalDebitosHist=debitosAtivos.reduce((s,d)=>s+Number(d.valor),0);
+  const qtdLojasDeb=[...new Set(debitosAtivos.map(d=>d.loja))].length;
+  document.getElementById('cards-dash').innerHTML=`
+    <div class="card muted"><label>Lojas Ocupadas</label><div class="val">${ocupadas.length}</div></div>
+    <div class="card red"><label>Lojas Vagas</label><div class="val">${vagas.length}</div></div>
+    <div class="card"><label>Total a Receber</label><div class="val">${fmt(totalReceber)}</div></div>
+    <div class="card green"><label>Recebido no Mês</label><div class="val">${fmt(totalRecebido)}</div></div>
+    <div class="card red"><label>Despesas do Mês</label><div class="val">${fmt(totalDesp)}</div></div>
+    <div class="card ${lucro>=0?'green':'red'}"><label>Lucro do Mês</label><div class="val">${fmt(lucro)}</div></div>
+    ${totalDebitosHist>0?`<div class="card red"><label>Débitos Históricos (${qtdLojasDeb} lojas)</label><div class="val">${fmt(totalDebitosHist)}</div></div>`:''}
+  `;
+  const grid=document.getElementById('mapa-lojas');
+  grid.innerHTML=LOJAS_IDS.map(id=>{
+    const l=state.lojas[id];
+    const atr=isAtrasada(id);
+    const mes2=mesAtualStr();
+    const pgm=state.pagamentos.find(p=>p.loja===id&&p.mes===mes2&&!p.cancelado);
+    let cls='loja-btn';
+    let dot='background:#444';
+    let dotTitle='Vaga';
+    if(l.ocupada&&pgm){cls+=' ocupada';dot='background:var(--green)';dotTitle='Em dia';}
+    else if(l.ocupada&&atr){cls+=' atrasada';dot='background:var(--red)';dotTitle='Atrasada';}
+    else if(l.ocupada){cls+=' ocupada';dot='background:var(--yellow)';dotTitle='Aguardando';}
+    return`<div class="${cls}" onclick="abrirModal('${id}')">
+      <div class="num">Loja ${id}</div>
+      <div><span class="status-dot" style="${dot}" title="${dotTitle}"></span></div>
+      <div class="tenant">${l.ocupada?l.nome.split(' ')[0]:'— Vaga —'}</div>
+    </div>`;
+  }).join('');
+  const alertDiv=document.getElementById('alertas-atraso');
+  // alertas de débitos históricos
+  const alertDebEl=document.getElementById('alertas-debitos');
+  if(alertDebEl){
+    const debs=(state.debitos||[]).filter(d=>!d.quitado);
+    if(debs.length){
+      const porLoja={};debs.forEach(d=>{if(!porLoja[d.loja])porLoja[d.loja]=[];porLoja[d.loja].push(d);});
+      alertDebEl.innerHTML='<h3 style="font-family:var(--font);color:var(--yellow);letter-spacing:2px;font-size:14px;margin-bottom:10px">⚠ DÉBITOS HISTÓRICOS PENDENTES</h3>'+
+        Object.entries(porLoja).map(([loja,ds])=>{
+          const total=ds.reduce((s,d)=>s+Number(d.valor),0);
+          const l=state.lojas[loja];
+          return`<div class="alert-box"><div><div class="loja-id">Loja ${loja}</div><div class="info">${l?l.nome:''} • ${ds.length} mês(es) em atraso</div></div><div style="text-align:right"><div class="dias">${fmt(total)}</div><div style="font-size:11px;color:var(--muted)">Total em débito</div></div></div>`;
+        }).join('');
+    } else {alertDebEl.innerHTML='';}
+  }
+  if(atrasadas.length===0){alertDiv.innerHTML='<p style="color:var(--green);font-size:13px;padding:10px 0">✔ Nenhum aluguel em atraso!</p>';return;}
+  alertDiv.innerHTML=atrasadas.map(id=>{
+    const l=state.lojas[id];
+    const d=diasAtraso(id);
+    return`<div class="alert-box">
+      <div><div class="loja-id">Loja ${id}</div><div class="info">${l.nome} • ${l.tel}</div></div>
+      <div style="text-align:right"><div class="dias">${d} dias em atraso</div><div style="font-size:12px;color:var(--muted)">${fmt(l.aluguel)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderLojas(filtro='todas'){
+  const tbody=document.getElementById('tbody-lojas');
+  tbody.innerHTML=LOJAS_IDS.map(id=>{
+    const l=state.lojas[id];
+    const atr=isAtrasada(id);
+    const mes=mesAtualStr();
+    const pgm=state.pagamentos.find(p=>p.loja===id&&p.mes===mes&&!p.cancelado);
+    let sit,sitClass;
+    if(!l.ocupada){sit='Vaga';sitClass='badge-vaga';}
+    else if(pgm){sit='Em Dia';sitClass='badge-ok';}
+    else if(atr){sit='Atrasado';sitClass='badge-late';}
+    else{sit='Aguardando';sitClass='';}
+    if(filtro==='ocupadas'&&!l.ocupada)return'';
+    if(filtro==='vagas'&&l.ocupada)return'';
+    if(filtro==='atrasadas'&&!atr)return'';
+    return`<tr>
+      <td><b style="color:var(--yellow);font-family:var(--font)">Loja ${id}</b></td>
+      <td>${l.ocupada?l.nome:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="color:var(--green)">${l.aluguel?fmt(l.aluguel):'—'}</td>
+      <td>${l.aluguel?'Dia '+l.venc:'—'}</td>
+      <td><span class="tag ${sitClass}">${sit}</span></td>
+      <td><button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="abrirModal('${id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filtrarLojas(f){renderLojas(f);}
+
+function renderPagamentos(){
+  const sel=document.getElementById('pg-loja');
+  sel.innerHTML='<option value="">Selecione...</option>'+LOJAS_IDS.filter(id=>state.lojas[id].ocupada).map(id=>`<option value="${id}">Loja ${id} – ${state.lojas[id].nome}</option>`).join('');
+  document.getElementById('pg-data').value=hoje();
+  document.getElementById('pg-mes').value=mesAtualStr();
+  const tbody=document.getElementById('tbody-pagamentos');
+  const sorted=[...state.pagamentos].sort((a,b)=>b.data.localeCompare(a.data));
+  tbody.innerHTML=sorted.slice(0,50).map(p=>{
+    const l=state.lojas[p.loja];
+    const totalPago=p.pago!==undefined?Number(p.pago):Number(p.valor);
+    const saldo=Number(p.valor)-totalPago;
+    let sit='';
+    if(p.cancelado){sit='<span class="tag" style="background:rgba(136,136,136,.15);color:var(--muted);border:1px solid var(--muted);text-decoration:line-through">ESTORNADO</span>';}
+    else if(saldo<=0){sit='<span class="tag badge-ok">QUITADO</span>';}
+    else if(totalPago>0){sit='<span class="tag" style="background:rgba(245,197,24,.15);color:var(--yellow);border:1px solid var(--yellow)">PARCIAL</span>';}
+    else{sit='<span class="tag badge-late">PENDENTE</span>';}
+    const cancelado=p.cancelado?'style="opacity:.45;text-decoration:line-through"':'';
+    const btnParc=(!p.cancelado&&saldo>0)?`<button class="btn-secondary" style="padding:3px 8px;font-size:10px;margin-right:4px" onclick="abrirParcial('${p.id}')">+ PARCIAL</button>`:'';
+    const btnEst=!p.cancelado?`<button class="btn-danger" style="padding:3px 8px;font-size:10px" onclick="confirmarEstorno('pag','${p.id}')">ESTORNAR</button>`:'';
+    const infoCancel=p.cancelado?`<div style="font-size:10px;color:var(--muted)">Estornado em ${fmtData(p.dataCancel)} — ${p.motivoCancel||''}</div>`:'';
+    return`<tr ${cancelado}>
+      <td ${cancelado}>${fmtData(p.data)}</td>
+      <td style="color:var(--yellow);font-family:var(--font)" ${cancelado}>Loja ${p.loja}</td>
+      <td ${cancelado}>${l?l.nome:''}</td>
+      <td ${cancelado}>${p.mes.split('-').reverse().join('/')}</td>
+      <td style="color:var(--green)" ${cancelado}>${fmt(p.valor)}</td>
+      <td style="color:var(--green)">${fmt(totalPago)}</td>
+      <td style="color:${saldo>0?'var(--red)':'var(--muted)'}">${fmt(saldo)}</td>
+      <td>${sit}</td>
+      <td style="font-size:11px;color:var(--muted)">${p.obs||''}${infoCancel}</td>
+      <td>${btnParc}${btnEst}</td>
+    </tr>`;
+  }).join('');
+}
+
+function preencherPg(){
+  const id=document.getElementById('pg-loja').value;
+  if(id&&state.lojas[id])document.getElementById('pg-valor').value=state.lojas[id].aluguel;
+}
+
+function registrarPagamento(){
+  const loja=document.getElementById('pg-loja').value;
+  const mes=document.getElementById('pg-mes').value;
+  const valor=parseFloat(document.getElementById('pg-valor').value);
+  const data=document.getElementById('pg-data').value;
+  const obs=document.getElementById('pg-obs').value;
+  if(!loja||!mes||!valor||!data){alert('Preencha todos os campos!');return;}
+  const existe=state.pagamentos.find(p=>p.loja===loja&&p.mes===mes&&!p.cancelado);
+  if(existe){if(!confirm('Já existe pagamento ativo para esta loja/mês. Registrar mesmo assim?'))return;}
+  const id=uid();
+  state.pagamentos.push({id,loja,mes,data,valor,obs,cancelado:false,pago:valor,parcelas:[{valor,data,obs}]});
+  addHistorico('pag-novo','Pagamento registrado — Loja '+loja+' ('+mes.split('-').reverse().join('/')+')',valor,'');
+  save();
+  document.getElementById('pg-valor').value='';document.getElementById('pg-obs').value='';
+  renderPagamentos();renderDash();
+}
+
+function renderDespesas(){
+  document.getElementById('desp-data').value=hoje();
+  document.getElementById('desp-mes').value=mesAtualStr();
+  const tbody=document.getElementById('tbody-despesas');
+  const sorted=[...state.despesas].sort((a,b)=>b.data.localeCompare(a.data));
+  tbody.innerHTML=sorted.map(d=>{
+    const cancelado=d.cancelado;
+    const sit=cancelado
+      ?'<span class="tag" style="background:rgba(136,136,136,.15);color:var(--muted);border:1px solid var(--muted);text-decoration:line-through">ESTORNADA</span>'
+      :'<span class="tag badge-ok">ATIVA</span>';
+    const infoCancel=cancelado?`<div style="font-size:10px;color:var(--muted)">Estornado em ${fmtData(d.dataCancel)} — ${d.motivoCancel||''}</div>`:'';
+    const btnEst=!cancelado?`<button class="btn-danger" style="padding:3px 8px;font-size:10px" onclick="confirmarEstorno('desp','${d.id}')">ESTORNAR</button>`:'';
+    const op=cancelado?'style="opacity:.45;text-decoration:line-through"':'';
+    return`<tr>
+      <td ${op}>${fmtData(d.data)}</td>
+      <td ${op}><span class="tag" style="background:rgba(245,197,24,.1);color:var(--yellow);border:1px solid rgba(245,197,24,.3)">${d.cat}</span></td>
+      <td ${op}>${d.desc}</td>
+      <td ${op}>${d.mes.split('-').reverse().join('/')}</td>
+      <td ${op} style="color:var(--red)">${fmt(d.valor)}</td>
+      <td>${sit}</td>
+      <td>${infoCancel}${btnEst}</td>
+    </tr>`;
+  }).join('');
+}
+
+function registrarDespesa(){
+  const cat=document.getElementById('desp-cat').value;
+  const mes=document.getElementById('desp-mes').value;
+  const valor=parseFloat(document.getElementById('desp-valor').value);
+  const data=document.getElementById('desp-data').value;
+  const desc=document.getElementById('desp-desc').value;
+  if(!cat||!mes||!valor||!data){alert('Preencha todos os campos!');return;}
+  const id=uid();
+  state.despesas.push({id,cat,mes,data,valor,desc,cancelado:false});
+  addHistorico('desp-nova','Despesa lançada — '+cat+': '+desc,valor,'Mês ref: '+mes.split('-').reverse().join('/'));
+  save();
+  document.getElementById('desp-valor').value='';document.getElementById('desp-desc').value='';
+  renderDespesas();renderDash();
+}
+
+
+/* ==============================
+   HISTÓRICO
+============================== */
+function addHistorico(tipo,desc,valor,extra){
+  if(!state.historico)state.historico=[];
+  const agora=new Date();
+  state.historico.unshift({
+    id:uid(),
+    tipo,desc,valor:Number(valor)||0,extra,
+    data:hoje(),
+    hora:agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  });
+  if(state.historico.length>200)state.historico=state.historico.slice(0,200);
+}
+
+function renderHistorico(){
+  const tbody=document.getElementById('tbody-historico');
+  if(!tbody)return;
+  const hist=state.historico||[];
+  if(!hist.length){tbody.innerHTML='<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">Nenhuma movimentação registrada ainda.</td></tr>';return;}
+  const icones={
+    'pag-novo':'💰','pag-parcial':'💰','pag-estorno':'↩️',
+    'desp-nova':'📋','desp-estorno':'↩️',
+    'debito-ant':'⚠️','debito-quitado':'✅'
+  };
+  tbody.innerHTML=hist.slice(0,100).map(h=>{
+    const ic=icones[h.tipo]||'📝';
+    const isEstorno=h.tipo.includes('estorno');
+    const vColor=isEstorno?'var(--muted)':(h.tipo.includes('desp')||h.tipo.includes('debito-ant')?'var(--red)':'var(--green)');
+    return`<tr>
+      <td>${fmtData(h.data)} ${h.hora}</td>
+      <td>${ic} ${h.desc}</td>
+      <td style="color:${vColor};font-family:var(--font)">${h.valor>0?fmt(h.valor):'—'}</td>
+      <td style="color:var(--muted);font-size:11px">${h.extra||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ==============================
+   ESTORNO
+============================== */
+function confirmarEstorno(tipo,id){
+  const motivo=prompt('Motivo do estorno/cancelamento (obrigatório):');
+  if(motivo===null)return;
+  if(!motivo.trim()){alert('Informe o motivo!');return;}
+  if(tipo==='pag'){
+    const p=state.pagamentos.find(x=>x.id===id);
+    if(!p){alert('Pagamento não encontrado!');return;}
+    if(p.cancelado){alert('Este pagamento já foi estornado.');return;}
+    p.cancelado=true;p.motivoCancel=motivo.trim();p.dataCancel=hoje();
+    addHistorico('pag-estorno','Recebimento estornado — Loja '+p.loja+' ('+p.mes.split('-').reverse().join('/')+')',p.pago||p.valor,'Motivo: '+motivo.trim());
+    save();renderPagamentos();renderDash();
+    alert('Recebimento estornado com sucesso! Histórico preservado.');
+  } else {
+    const d=state.despesas.find(x=>x.id===id);
+    if(!d){alert('Despesa não encontrada!');return;}
+    if(d.cancelado){alert('Esta despesa já foi estornada.');return;}
+    d.cancelado=true;d.motivoCancel=motivo.trim();d.dataCancel=hoje();
+    addHistorico('desp-estorno','Despesa estornada — '+d.cat+': '+d.desc,d.valor,'Motivo: '+motivo.trim());
+    save();renderDespesas();renderDash();
+    alert('Despesa estornada com sucesso! Histórico preservado.');
+  }
+}
+
+/* ==============================
+   PAGAMENTOS PARCIAIS
+============================== */
+function abrirParcial(pagId){
+  const p=state.pagamentos.find(x=>x.id===pagId);
+  if(!p)return;
+  const totalPago=Number(p.pago)||0;
+  const saldo=Number(p.valor)-totalPago;
+  if(saldo<=0){alert('Este aluguel já está quitado!');return;}
+  document.getElementById('parcial-id').value=pagId;
+  document.getElementById('parcial-loja').textContent='Loja '+p.loja+' – '+p.mes.split('-').reverse().join('/');
+  document.getElementById('parcial-total').textContent=fmt(p.valor);
+  document.getElementById('parcial-pago').textContent=fmt(totalPago);
+  document.getElementById('parcial-saldo').textContent=fmt(saldo);
+  const pct=Math.round((totalPago/Number(p.valor))*100);
+  document.getElementById('parcial-bar').style.width=pct+'%';
+  document.getElementById('parcial-valor').value='';
+  document.getElementById('parcial-data').value=hoje();
+  document.getElementById('parcial-obs').value='';
+  // histórico de parcelas
+  const parcs=p.parcelas||[];
+  document.getElementById('parcial-hist').innerHTML=parcs.length
+    ?'<table class="hist-table"><thead><tr><th>DATA</th><th>VALOR</th><th>OBS</th></tr></thead><tbody>'+
+      parcs.map(pc=>`<tr><td>${fmtData(pc.data)}</td><td style="color:var(--green)">${fmt(pc.valor)}</td><td style="color:var(--muted)">${pc.obs||''}</td></tr>`).join('')+
+      '</tbody></table>'
+    :'<p style="color:var(--muted);font-size:12px">Nenhuma parcela registrada ainda.</p>';
+  document.getElementById('modal-parcial').classList.add('show');
+}
+
+function fecharParcial(){document.getElementById('modal-parcial').classList.remove('show');}
+document.getElementById('modal-parcial').addEventListener('click',function(e){if(e.target===this)fecharParcial();});
+
+function salvarParcial(){
+  const pagId=document.getElementById('parcial-id').value;
+  const valStr=document.getElementById('parcial-valor').value;
+  const data=document.getElementById('parcial-data').value;
+  const obs=document.getElementById('parcial-obs').value;
+  const valor=parseFloat(valStr);
+  if(!valor||!data){alert('Preencha valor e data!');return;}
+  const p=state.pagamentos.find(x=>x.id===pagId);
+  if(!p)return;
+  const saldo=Number(p.valor)-(Number(p.pago)||0);
+  if(valor>saldo){alert('Valor ('+fmt(valor)+') maior que o saldo pendente ('+fmt(saldo)+')!');return;}
+  if(!p.parcelas)p.parcelas=[];
+  p.parcelas.push({valor,data,obs});
+  p.pago=(Number(p.pago)||0)+valor;
+  const restante=Number(p.valor)-p.pago;
+  addHistorico('pag-parcial','Pgto parcial — Loja '+p.loja+' ('+p.mes.split('-').reverse().join('/')+')',valor,'Saldo restante: '+fmt(restante));
+  save();fecharParcial();renderPagamentos();renderDash();
+  alert('Pagamento parcial registrado! Saldo restante: '+fmt(restante));
+}
+
+/* ==============================
+   DÉBITOS ANTIGOS
+============================== */
+function renderDebitos(){
+  const sel=document.getElementById('deb-loja-sel');
+  if(sel){
+    sel.innerHTML='<option value="">Selecione a loja...</option>'+
+      LOJAS_IDS.filter(id=>state.lojas[id].ocupada).map(id=>`<option value="${id}">Loja ${id} – ${state.lojas[id].nome}</option>`).join('');
+  }
+  const tbody=document.getElementById('tbody-debitos');
+  if(!tbody)return;
+  const debs=state.debitos||[];
+  if(!debs.length){tbody.innerHTML='<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">Nenhum débito antigo lançado.</td></tr>';return;}
+  // agrupa por loja
+  const porLoja={};
+  debs.forEach(d=>{if(!porLoja[d.loja])porLoja[d.loja]=[];porLoja[d.loja].push(d);});
+  let html='';
+  Object.entries(porLoja).forEach(([loja,ds])=>{
+    const totalDev=ds.reduce((s,d)=>s+Number(d.valor),0);
+    const l=state.lojas[loja];
+    html+=`<tr style="background:rgba(229,57,53,.06)">
+      <td colspan="2" style="color:var(--yellow);font-family:var(--font);font-size:13px">Loja ${loja} — ${l?l.nome:''}</td>
+      <td colspan="2" style="color:var(--red);font-family:var(--font)">Total em débito: ${fmt(totalDev)}</td>
+      <td colspan="2" style="color:var(--muted);font-size:11px">${ds.length} mês(es) em atraso</td>
+    </tr>`;
+    ds.forEach(d=>{
+      const btnQ=!d.quitado?`<button class="btn-secondary" style="padding:3px 8px;font-size:10px;margin-right:4px" onclick="quitarDebito('${d.id}')">QUITAR</button>`:'<span style="color:var(--green);font-size:11px">✔ QUITADO</span>';
+      html+=`<tr style="${d.quitado?'opacity:.5':''}">
+        <td style="padding-left:20px;color:var(--muted)">↳ ${d.comp?d.comp.split('-').reverse().join('/'):''}</td>
+        <td style="color:var(--red)">${fmt(d.valor)}</td>
+        <td style="color:var(--muted);font-size:11px">${d.obs||''}</td>
+        <td style="font-size:11px;color:var(--muted)">Lançado em ${fmtData(d.dataCad)}</td>
+        <td colspan="2">${btnQ}</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML=html;
+}
+
+function lancarDebitoAntigo(){
+  const loja=document.getElementById('deb-loja-sel').value;
+  const comp=document.getElementById('deb-comp').value;
+  const valor=parseFloat(document.getElementById('deb-valor').value);
+  const obs=document.getElementById('deb-obs').value;
+  if(!loja||!comp||!valor){alert('Preencha todos os campos!');return;}
+  if(!state.debitos)state.debitos=[];
+  const l=state.lojas[loja];
+  state.debitos.push({id:uid(),loja,comp,valor,obs,dataCad:hoje(),quitado:false,nomeInq:l?l.nome:''});
+  addHistorico('debito-ant','Débito antigo lançado — Loja '+loja+' ('+comp.split('-').reverse().join('/')+')',valor,obs||'Débito anterior ao sistema');
+  save();
+  document.getElementById('deb-valor').value='';document.getElementById('deb-obs').value='';
+  renderDebitos();renderDash();
+  alert('Débito antigo registrado!');
+}
+
+function quitarDebito(id){
+  const d=state.debitos.find(x=>x.id===id);
+  if(!d)return;
+  if(!confirm('Marcar este débito como quitado?'))return;
+  d.quitado=true;d.dataQuit=hoje();
+  addHistorico('debito-quitado','Débito antigo quitado — Loja '+d.loja+' ('+d.comp.split('-').reverse().join('/')+')',d.valor,'');
+  save();renderDebitos();renderDash();
+}
+
+function renderCadastro(){
+  const sel=document.getElementById('cad-loja-sel');
+  sel.innerHTML='<option value="">— Selecione a loja —</option>'+LOJAS_IDS.map(id=>{
+    const l=state.lojas[id];
+    return`<option value="${id}">Loja ${id}${l.ocupada?' – '+l.nome:' (Vaga)'}</option>`;
+  }).join('');
+}
+
+function carregarCadastro(){
+  const id=document.getElementById('cad-loja-sel').value;
+  if(!id){document.getElementById('cad-num').value='';document.getElementById('cad-nome').value='';document.getElementById('cad-tel').value='';document.getElementById('cad-email').value='';document.getElementById('cad-aluguel').value='';document.getElementById('cad-venc').value='';return;}
+  const l=state.lojas[id];
+  document.getElementById('cad-num').value='Loja '+id;
+  document.getElementById('cad-nome').value=l.nome||'';
+  document.getElementById('cad-tel').value=l.tel||'';
+  document.getElementById('cad-email').value=l.email||'';
+  document.getElementById('cad-aluguel').value=l.aluguel||'';
+  document.getElementById('cad-venc').value=l.venc||10;
+}
+
+function salvarCadastro(){
+  const id=document.getElementById('cad-loja-sel').value;
+  if(!id){alert('Selecione uma loja!');return;}
+  const nome=document.getElementById('cad-nome').value;
+  const tel=document.getElementById('cad-tel').value;
+  const email=document.getElementById('cad-email').value;
+  const aluguel=parseFloat(document.getElementById('cad-aluguel').value)||0;
+  const venc=parseInt(document.getElementById('cad-venc').value)||10;
+  state.lojas[id]={id,nome,tel,email,aluguel,venc,ocupada:!!nome};
+  save();alert('Cadastro salvo com sucesso!');renderCadastro();
+}
+
+function desocuparLoja(){
+  const id=document.getElementById('cad-loja-sel').value;
+  if(!id){alert('Selecione uma loja!');return;}
+  if(!confirm('Desocupar Loja '+id+'? O histórico de pagamentos será mantido.'))return;
+  state.lojas[id]={...state.lojas[id],nome:'',tel:'',email:'',ocupada:false};
+  save();alert('Loja marcada como vaga.');renderCadastro();
+}
+
+function abrirModal(id){
+  const l=state.lojas[id];
+  const mes=mesAtualStr();
+  const pgm=state.pagamentos.find(p=>p.loja===id&&p.mes===mes);
+  const atr=isAtrasada(id);
+  const hist=[...state.pagamentos].filter(p=>p.loja===id).sort((a,b)=>b.mes.localeCompare(a.mes)).slice(0,12);
+  let sitBadge=l.ocupada?(pgm?'<span class="status-badge badge-ok">EM DIA</span>':(atr?'<span class="status-badge badge-late">ATRASADO</span>':'<span class="status-badge">AGUARDANDO</span>')):'<span class="status-badge badge-vaga">VAGA</span>';
+  document.getElementById('modal-title').textContent='LOJA '+id;
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-row"><label>Situação</label><span>${sitBadge}</span></div>
+    ${l.ocupada?`<div class="modal-row"><label>Inquilino</label><span>${l.nome}</span></div>
+    <div class="modal-row"><label>Telefone</label><span>${l.tel}</span></div>
+    <div class="modal-row"><label>E-mail</label><span>${l.email||'—'}</span></div>
+    <div class="modal-row"><label>Aluguel</label><span style="color:var(--green)">${fmt(l.aluguel)}</span></div>
+    <div class="modal-row"><label>Vencimento</label><span>Todo dia ${l.venc}</span></div>
+    ${atr?`<div class="modal-row"><label>Dias em Atraso</label><span style="color:var(--red)">${diasAtraso(id)} dias</span></div>`:''}
+    <h4 style="font-family:var(--font);color:var(--yellow);letter-spacing:1px;font-size:13px;margin:14px 0 6px">HISTÓRICO DE PAGAMENTOS</h4>
+    <table class="hist-table">
+      <thead><tr><th>MÊS</th><th>DATA PGTO</th><th>VALOR TOTAL</th><th>PAGO</th><th>SALDO</th><th>SITUAÇÃO</th></tr></thead>
+      <tbody>${hist.length?hist.map(p=>{
+        const pago=Number(p.pago)||Number(p.valor);
+        const saldo=Number(p.valor)-pago;
+        const sit=p.cancelado?'<span style="color:var(--muted)">ESTORNADO</span>':(saldo<=0?'<span style="color:var(--green)">QUITADO</span>':(pago>0?'<span style="color:var(--yellow)">PARCIAL</span>':'<span style="color:var(--red)">PENDENTE</span>'));
+        return`<tr style="${p.cancelado?'opacity:.4;text-decoration:line-through':''}"><td>${p.mes.split('-').reverse().join('/')}</td><td>${fmtData(p.data)}</td><td style="color:var(--green)">${fmt(p.valor)}</td><td style="color:var(--green)">${fmt(pago)}</td><td style="color:${saldo>0?'var(--red)':'var(--muted)'}">${fmt(saldo)}</td><td>${sit}</td></tr>`;
+      }).join(''):'<tr><td colspan="6" style="color:var(--muted);text-align:center">Nenhum pagamento registrado</td></tr>'}</tbody>
+    </table>
+    ${(()=>{const debs=(state.debitos||[]).filter(d=>d.loja===id&&!d.quitado);if(!debs.length)return'';const total=debs.reduce((s,d)=>s+Number(d.valor),0);return`<h4 style="font-family:var(--font);color:var(--red);letter-spacing:1px;font-size:13px;margin:14px 0 6px">⚠ DÉBITOS HISTÓRICOS PENDENTES</h4><table class="hist-table"><thead><tr><th>COMPETÊNCIA</th><th>VALOR</th><th>OBS</th></tr></thead><tbody>${debs.map(d=>`<tr><td>${d.comp.split('-').reverse().join('/')}</td><td style="color:var(--red)">${fmt(d.valor)}</td><td style="color:var(--muted)">${d.obs||''}</td></tr>`).join('')}</tbody></table><div style="margin-top:8px;background:rgba(229,57,53,.1);border:1px solid var(--red);padding:8px;font-family:var(--font);font-size:13px;color:var(--red)">TOTAL EM DÉBITO: ${fmt(total)}</div>`;})()}`:'<p style="color:var(--muted);text-align:center;padding:20px 0">Loja desocupada</p>'}
+  `;
+  document.getElementById('modal-loja').classList.add('show');
+}
+
+function fecharModal(){document.getElementById('modal-loja').classList.remove('show');}
+document.getElementById('modal-loja').addEventListener('click',function(e){if(e.target===this)fecharModal();});
+
+function initRelatorio(){
+  const selMes=document.getElementById('rel-mes');
+  const selAno=document.getElementById('rel-ano');
+  if(selMes.options.length===0){
+    const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    meses.forEach((m,i)=>selMes.add(new Option(m,(i+1<10?'0':'')+(i+1))));
+    const h=new Date();
+    selMes.value=(h.getMonth()+1<10?'0':'')+(h.getMonth()+1);
+    for(let y=h.getFullYear();y>=h.getFullYear()-3;y--)selAno.add(new Option(y,y));
+  }
+  gerarRelatorio();
+}
+
+function gerarRelatorio(){
+  const tipo=document.getElementById('rel-tipo').value;
+  const mes=document.getElementById('rel-mes').value;
+  const ano=document.getElementById('rel-ano').value;
+  const div=document.getElementById('rel-content');
+  if(tipo==='mensal'){
+    const mesStr=ano+'-'+mes;
+    const pgs=state.pagamentos.filter(p=>p.mes===mesStr&&!p.cancelado);
+    const desps=state.despesas.filter(d=>d.mes===mesStr&&!d.cancelado);
+    const totalRec=pgs.reduce((s,p)=>s+(Number(p.pago)||Number(p.valor)),0);
+    const totalDesp=desps.reduce((s,d)=>s+Number(d.valor),0);
+    const lucro=totalRec-totalDesp;
+    const mNomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const mNome=mNomes[parseInt(mes)-1];
+    div.innerHTML=`
+    <h3 style="font-family:var(--font);color:var(--yellow);font-size:18px;letter-spacing:3px;margin-bottom:16px">RELATÓRIO — ${mNome.toUpperCase()} ${ano}</h3>
+    <div class="rel-section">
+      <h4>💰 ALUGUÉIS RECEBIDOS</h4>
+      ${pgs.length?pgs.map(p=>`<div class="rel-row"><span>Loja ${p.loja} – ${state.lojas[p.loja]?state.lojas[p.loja].nome:''}</span><span class="amt income">${fmt(p.valor)}</span></div>`).join(''):'<div style="color:var(--muted);font-size:13px">Nenhum pagamento registrado.</div>'}
+      <div class="rel-row" style="margin-top:8px;border-top:1px solid var(--yellow)"><b style="color:var(--yellow)">TOTAL RECEBIDO</b><span class="amt income">${fmt(totalRec)}</span></div>
+    </div>
+    <div class="rel-section" style="border-left-color:var(--red)">
+      <h4 style="color:var(--red)">📋 DESPESAS</h4>
+      ${desps.length?desps.map(d=>`<div class="rel-row"><span>${d.cat} – ${d.desc}</span><span class="amt expense">${fmt(d.valor)}</span></div>`).join(''):'<div style="color:var(--muted);font-size:13px">Nenhuma despesa registrada.</div>'}
+      <div class="rel-row" style="margin-top:8px;border-top:1px solid var(--red)"><b style="color:var(--red)">TOTAL DESPESAS</b><span class="amt expense">${fmt(totalDesp)}</span></div>
+    </div>
+    <div class="rel-section" style="border-left-color:${lucro>=0?'var(--green)':'var(--red)'}">
+      <h4 style="color:${lucro>=0?'var(--green)':'var(--red)'}">📊 RESULTADO</h4>
+      <div class="rel-row"><span>Total Recebido</span><span class="amt income">${fmt(totalRec)}</span></div>
+      <div class="rel-row"><span>Total Despesas</span><span class="amt expense">– ${fmt(totalDesp)}</span></div>
+      <div class="rel-row" style="padding-top:10px;border-top:1px solid ${lucro>=0?'var(--green)':'var(--red)'}"><b style="color:${lucro>=0?'var(--green)':'var(--red)'}">LUCRO LÍQUIDO</b><span class="amt profit" style="color:${lucro>=0?'var(--green)':'var(--red)'}">${fmt(lucro)}</span></div>
+    </div>`;
+  } else {
+    const meses=['01','02','03','04','05','06','07','08','09','10','11','12'];
+    const mNomes=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    let totalAnualRec=0,totalAnualDesp=0;
+    const rows=meses.map((m,i)=>{
+      const mesStr=ano+'-'+m;
+      const rec=state.pagamentos.filter(p=>p.mes===mesStr&&!p.cancelado).reduce((s,p)=>s+(Number(p.pago)||Number(p.valor)),0);
+      const desp=state.despesas.filter(d=>d.mes===mesStr&&!d.cancelado).reduce((s,d)=>s+Number(d.valor),0);
+      totalAnualRec+=rec;totalAnualDesp+=desp;
+      const liq=rec-desp;
+      return`<tr><td style="color:var(--yellow);font-family:var(--font)">${mNomes[i]}/${ano}</td><td style="color:var(--green)">${fmt(rec)}</td><td style="color:var(--red)">${fmt(desp)}</td><td style="color:${liq>=0?'var(--green)':'var(--red)'}"><b>${fmt(liq)}</b></td></tr>`;
+    }).join('');
+    const lucroAnual=totalAnualRec-totalAnualDesp;
+    div.innerHTML=`
+    <h3 style="font-family:var(--font);color:var(--yellow);font-size:18px;letter-spacing:3px;margin-bottom:16px">RELATÓRIO ANUAL — ${ano}</h3>
+    <div class="tbl-wrap">
+    <table class="main">
+      <thead><tr><th>MÊS</th><th>RECEBIDO</th><th>DESPESAS</th><th>LUCRO LÍQUIDO</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr style="background:var(--bg4)">
+        <td style="font-family:var(--font);color:var(--yellow)">TOTAL ${ano}</td>
+        <td style="color:var(--green);font-family:var(--font)">${fmt(totalAnualRec)}</td>
+        <td style="color:var(--red);font-family:var(--font)">${fmt(totalAnualDesp)}</td>
+        <td style="color:${lucroAnual>=0?'var(--green)':'var(--red)'};font-family:var(--font);font-size:16px">${fmt(lucroAnual)}</td>
+      </tr></tfoot>
+    </table>
+    </div>`;
+  }
+}
+
+const h=new Date();
+document.getElementById('data-hoje').textContent=h.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
+initState();
+renderDash();
+</script>
